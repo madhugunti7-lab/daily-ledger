@@ -63,52 +63,43 @@
   // YOUR APPS SCRIPT WEB APP URL
   const scriptURL = 'https://script.google.com/macros/s/AKfycby7cIqhwxnq_JvhESHF4WmeuO1hsLAc-DUQm80TXb7D52xPNHPhVbsGtQJRFXImuF2E/exec'; 
 
-  document.getElementById('ledgerForm').addEventListener('submit', async (e) => {
+  document.getElementById('ledgerForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    const btn = document.getElementById('submitBtn');
     const status = document.getElementById('statusMessage');
     
-    btn.disabled = true;
-    btn.innerText = "Submitting...";
-    status.innerText = "";
-
-    // Sending empty strings for removed fields to keep Google Sheet columns aligned
+    // Compile the strict 5-field payload
     let payload = {
       txDate: document.getElementById('txDate').value,
       type: document.getElementById('type').value,
-      category: "", 
       amount: document.getElementById('amount').value,
       mode: document.getElementById('mode').value,
-      taxFlag: "",
-      notes: "",
-      pin: document.getElementById('pin').value, 
-      fileBase64: "",
-      fileName: "",
-      fileType: ""
+      pin: document.getElementById('pin').value
     };
 
-    try {
-      const response = await fetch(scriptURL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload),
-        redirect: "follow" 
-      });
-
-      const result = await response.json();
-
+    // 1. Instant User Feedback: Clear form immediately so you don't have to wait
+    status.innerHTML = `<span class="text-primary fw-bold">Syncing in background...</span>`;
+    document.getElementById('ledgerForm').reset();
+    
+    // 2. Fire-and-forget: Send data to Google without freezing the page
+    fetch(scriptURL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+      redirect: "follow" 
+    })
+    .then(response => response.json())
+    .then(result => {
       if (result.status === "success") {
         status.innerHTML = `<span class="text-success fw-bold">Entry recorded successfully!</span>`;
-        document.getElementById('ledgerForm').reset();
+        // Optional: clear the success message after 3 seconds for a clean slate
+        setTimeout(() => status.innerHTML = "", 3000); 
       } else {
-        throw new Error(result.message);
+        status.innerHTML = `<span class="text-danger fw-bold">Error: ${result.message}</span>`;
       }
-    } catch (error) {
-      status.innerHTML = `<span class="text-danger fw-bold">Error: ${error.message}</span>`;
-    } finally {
-      btn.disabled = false;
-      btn.innerText = "Submit Entry";
-    }
+    })
+    .catch(error => {
+      status.innerHTML = `<span class="text-danger fw-bold">Network error. Please check your connection.</span>`;
+    });
   });
 </script>
 </body>
