@@ -66,7 +66,13 @@
           <label class="form-label">Notes</label>
           <textarea class="form-control" id="notes" rows="2"></textarea>
         </div>
-
+        
+        <!-- Security PIN Field -->
+        <div class="mb-3">
+          <label class="form-label text-danger fw-bold">Security PIN</label>
+          <input type="password" class="form-control" id="pin" required>
+        </div>
+        
         <button type="submit" class="btn btn-primary w-100" id="submitBtn">Submit Entry</button>
         <div id="statusMessage" class="mt-3 text-center"></div>
       </form>
@@ -75,7 +81,7 @@
 </div>
 
 <script>
-  // REPLACE THIS WITH YOUR NEW APPS SCRIPT WEB APP URL
+  // YOUR APPS SCRIPT WEB APP URL
   const scriptURL = 'https://script.google.com/macros/s/AKfycby7cIqhwxnq_JvhESHF4WmeuO1hsLAc-DUQm80TXb7D52xPNHPhVbsGtQJRFXImuF2E/exec'; 
 
   document.getElementById('ledgerForm').addEventListener('submit', async (e) => {
@@ -89,6 +95,7 @@
     btn.innerText = "Uploading...";
     status.innerText = "";
 
+    // The single, correct payload block containing the PIN
     let payload = {
       txDate: document.getElementById('txDate').value,
       type: document.getElementById('type').value,
@@ -97,6 +104,7 @@
       mode: document.getElementById('mode').value,
       taxFlag: document.getElementById('taxFlag').checked ? "Yes" : "No",
       notes: document.getElementById('notes').value,
+      pin: document.getElementById('pin').value, 
       fileBase64: "",
       fileName: "",
       fileType: ""
@@ -119,7 +127,6 @@
         payload.fileBase64 = await getBase64(file);
       }
 
-      // Added redirect: "follow" to resolve the fetch error
       const response = await fetch(scriptURL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
