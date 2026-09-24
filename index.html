@@ -23,11 +23,6 @@
       <form id="ledgerForm">
         
         <div class="mb-3">
-          <label class="form-label">Date</label>
-          <input type="date" class="form-control" id="txDate" required>
-        </div>
-
-        <div class="mb-3">
           <label class="form-label">Amount (₹)</label>
           <!-- Autofocus jumps directly here on load -->
           <input type="number" step="0.01" class="form-control" id="amount" required autofocus>
@@ -64,23 +59,13 @@
   // YOUR APPS SCRIPT WEB APP URL
   const scriptURL = 'https://script.google.com/macros/s/AKfycby7cIqhwxnq_JvhESHF4WmeuO1hsLAc-DUQm80TXb7D52xPNHPhVbsGtQJRFXImuF2E/exec'; 
 
-  // Function to set today's date automatically
-  function setTodayDate() {
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('txDate').value = today;
-  }
-
-  // Set date on initial page load
-  setTodayDate();
-
   document.getElementById('ledgerForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const status = document.getElementById('statusMessage');
     const amountInput = document.getElementById('amount');
     
-    // Compile the payload
+    // Compile the payload without the date
     let payload = {
-      txDate: document.getElementById('txDate').value,
       type: document.getElementById('type').value,
       amount: amountInput.value,
       mode: document.getElementById('mode').value
@@ -89,9 +74,8 @@
     // 1. Instant User Feedback
     status.innerHTML = `<span class="text-primary fw-bold">Syncing in background...</span>`;
     
-    // Reset form, then re-apply today's date and refocus amount
+    // Reset form and refocus amount instantly for the next entry
     document.getElementById('ledgerForm').reset();
-    setTodayDate();
     amountInput.focus();
     
     // 2. Fire-and-forget
