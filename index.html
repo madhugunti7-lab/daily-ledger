@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ledger Entry</title>
+  
+  <!-- Preconnect to Google and CDN for faster network handshakes -->
+  <link rel="preconnect" href="https://script.google.com">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
@@ -23,17 +28,18 @@
         </div>
 
         <div class="mb-3">
+          <label class="form-label">Amount (₹)</label>
+          <!-- Autofocus jumps directly here on load -->
+          <input type="number" step="0.01" class="form-control" id="amount" required autofocus>
+        </div>
+
+        <div class="mb-3">
           <label class="form-label">Type</label>
           <select class="form-select" id="type" required>
             <option value="Expense">Expense</option>
             <option value="Income">Income</option>
             <option value="Transfer">Transfer</option>
           </select>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label">Amount (₹)</label>
-          <input type="number" step="0.01" class="form-control" id="amount" required>
         </div>
 
         <div class="mb-3">
@@ -44,11 +50,6 @@
             <option value="Bank Transfer">Bank Transfer</option>
             <option value="Cash">Cash</option>
           </select>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label text-danger fw-bold">Security PIN</label>
-          <input type="password" class="form-control" id="pin" required>
         </div>
 
         <button type="submit" class="btn btn-primary w-100" id="submitBtn">Submit Entry</button>
@@ -63,24 +64,37 @@
   // YOUR APPS SCRIPT WEB APP URL
   const scriptURL = 'https://script.google.com/macros/s/AKfycby7cIqhwxnq_JvhESHF4WmeuO1hsLAc-DUQm80TXb7D52xPNHPhVbsGtQJRFXImuF2E/exec'; 
 
+  // Function to set today's date automatically
+  function setTodayDate() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('txDate').value = today;
+  }
+
+  // Set date on initial page load
+  setTodayDate();
+
   document.getElementById('ledgerForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const status = document.getElementById('statusMessage');
+    const amountInput = document.getElementById('amount');
     
-    // Compile the strict 5-field payload
+    // Compile the payload
     let payload = {
       txDate: document.getElementById('txDate').value,
       type: document.getElementById('type').value,
-      amount: document.getElementById('amount').value,
-      mode: document.getElementById('mode').value,
-      pin: document.getElementById('pin').value
+      amount: amountInput.value,
+      mode: document.getElementById('mode').value
     };
 
-    // 1. Instant User Feedback: Clear form immediately so you don't have to wait
+    // 1. Instant User Feedback
     status.innerHTML = `<span class="text-primary fw-bold">Syncing in background...</span>`;
-    document.getElementById('ledgerForm').reset();
     
-    // 2. Fire-and-forget: Send data to Google without freezing the page
+    // Reset form, then re-apply today's date and refocus amount
+    document.getElementById('ledgerForm').reset();
+    setTodayDate();
+    amountInput.focus();
+    
+    // 2. Fire-and-forget
     fetch(scriptURL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -91,7 +105,6 @@
     .then(result => {
       if (result.status === "success") {
         status.innerHTML = `<span class="text-success fw-bold">Entry recorded successfully!</span>`;
-        // Optional: clear the success message after 3 seconds for a clean slate
         setTimeout(() => status.innerHTML = "", 3000); 
       } else {
         status.innerHTML = `<span class="text-danger fw-bold">Error: ${result.message}</span>`;
